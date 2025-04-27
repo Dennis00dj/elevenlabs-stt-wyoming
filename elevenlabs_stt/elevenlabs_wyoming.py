@@ -208,10 +208,14 @@ async def main() -> None:
     # Create server
     server = AsyncServer.from_uri(args.uri)
     
+    # Store CLI args for use in the handler factory
+    api_key = args.api_key
+    model_id = args.model_id
+    
     try:
         await server.run(
-            lambda *args, **kwargs: ElevenLabsEventHandler(
-                wyoming_info, args.api_key, args.model_id, *args, **kwargs
+            lambda reader, writer: ElevenLabsEventHandler(
+                wyoming_info, api_key, model_id, reader, writer
             )
         )
     except KeyboardInterrupt:
