@@ -11,7 +11,7 @@ fi
 
 # API-Key aus der Konfiguration lesen
 API_KEY=$(jq -r ".api_key // empty" $CONFIG_PATH)
-PORT=$(jq -r ".port // \"10300\"" $CONFIG_PATH)
+PORT=$(jq -r ".port // \"10200\"" $CONFIG_PATH)
 MODEL_ID=$(jq -r ".model_id // \"scribe_v1\"" $CONFIG_PATH)
 DEBUG=$(jq -r ".debug // \"false\"" $CONFIG_PATH)
 
@@ -23,8 +23,8 @@ fi
 
 # Prüfen, ob Port eine Zahl ist
 if ! [[ "$PORT" =~ ^[0-9]+$ ]]; then
-    echo "Fehler: Port ist keine gültige Zahl, verwende Standard-Port 10300"
-    PORT=10300
+    echo "Fehler: Port ist keine gültige Zahl, verwende Standard-Port 10200"
+    PORT=10200
 fi
 
 # Debug-Flag überprüfen
