@@ -10,6 +10,7 @@ import wave
 import requests
 from typing import Optional
 
+# Direct Wyoming imports - check available classes first
 from wyoming.server import AsyncServer
 from wyoming.info import Info, Describe, AsrProgram, AsrModel, Attribution
 from wyoming.asr import Transcribe, Transcript
@@ -26,12 +27,16 @@ class ElevenLabsSTTServer:
         self.host = host
         self.port = port
         self.model_id = model_id
+        self.server = None
 
     async def start(self) -> None:
         """Run server."""
-        server = AsyncServer.from_address(self.host, self.port)
+        # Create Wyoming server directly
+        self.server = AsyncServer(self.host, self.port)
         _LOGGER.info(f"ElevenLabs Wyoming Server starting on {self.host}:{self.port}")
-        await server.run(self.handle_client)
+        
+        # Start the server
+        await self.server.start(self.handle_client)
 
     async def handle_client(self, connection) -> None:
         """Handle Wyoming client."""
@@ -180,6 +185,13 @@ async def main() -> None:
         level=logging.DEBUG if args.debug else logging.INFO,
         format="%(asctime)s - %(name)s - %(levelname)s - %(message)s",
     )
+    
+    # Let's print Wyoming version info for debugging
+    try:
+        import wyoming
+        _LOGGER.info(f"Wyoming library version: {getattr(wyoming, '__version__', 'unknown')}")
+    except Exception as e:
+        _LOGGER.warning(f"Could not determine Wyoming version: {e}")
     
     # Create and start server
     server = ElevenLabsSTTServer(
