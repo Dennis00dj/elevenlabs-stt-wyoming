@@ -1,0 +1,29 @@
+{
+  "name": "ElevenLabs Scribe STT",
+  "version": "1.0.0",
+  "slug": "elevenlabs_stt",
+  "description": "Speech-to-Text mit ElevenLabs Scribe für Home Assistant",
+  "url": "https://github.com/yourusername/elevenlabs-stt-wyoming",
+  "arch": ["armhf", "armv7", "aarch64", "amd64", "i386"],
+  "startup": "application",
+  "boot": "auto",
+  "init": false,
+  "options": {
+    "api_key": "",
+    "port": 10300,
+    "model_id": "scribe_v1",
+    "debug": false
+  },
+  "schema": {
+    "api_key": "str",
+    "port": "port",
+    "model_id": "str",
+    "debug": "bool"
+  },
+  "ports": {
+    "10300/tcp": 10300
+  },
+  "ports_description": {
+    "10300/tcp": "Wyoming Protokoll"
+  }
+}
