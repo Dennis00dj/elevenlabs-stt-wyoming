@@ -10,7 +10,7 @@ import wave
 import requests
 from typing import Optional
 
-from wyoming.server import AsyncServer, AsyncConnection
+from wyoming.server import AsyncServer
 from wyoming.info import Info, Describe, AsrProgram, AsrModel, Attribution
 from wyoming.asr import Transcribe, Transcript, AsrStop
 from wyoming.audio import AudioChunk, AudioStop
@@ -33,7 +33,7 @@ class ElevenLabsSTTServer:
         _LOGGER.info(f"ElevenLabs Wyoming Server starting on {self.host}:{self.port}")
         await server.run(self.handle_client)
 
-    async def handle_client(self, connection: AsyncConnection) -> None:
+    async def handle_client(self, connection) -> None:
         """Handle Wyoming client."""
         client_id = str(uuid.uuid4())
         _LOGGER.info(f"Client {client_id} connected")
