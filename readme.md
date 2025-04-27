@@ -1,4 +1,5 @@
 # ElevenLabs Scribe STT Add-on für Home Assistant
+#readme.md
 
 Dieses Add-on fügt ElevenLabs Scribe Speech-to-Text zu Home Assistant hinzu. Es verwendet das Wyoming-Protokoll, um nahtlos mit dem Voice Assistant zu integrieren.
 
@@ -11,11 +12,12 @@ ElevenLabs Scribe ist ein leistungsstarker Speech-to-Text-Dienst, der mehrere Sp
 1. Fügen Sie dieses Repository zu Ihren Add-on-Repositories hinzu:
    - Gehen Sie zu **Einstellungen** → **Add-ons** → **Add-on Store**
    - Klicken Sie auf das Menü in der oberen rechten Ecke und wählen Sie **Repositories**
-   - Fügen Sie die folgende URL hinzu: `https://github.com/yourusername/elevenlabs-stt-wyoming`
+   - Fügen Sie die folgende URL hinzu: `https://github.com/Dennis00dj/elevenlabs-stt-wyoming`
    - Klicken Sie auf **Hinzufügen**
 
 2. Installieren Sie das Add-on:
    - Suchen Sie nach "ElevenLabs Scribe STT" in der Add-on-Liste
+   - Falls nicht vorhanden einmal die Seite neuladen
    - Klicken Sie auf **Installieren**
 
 3. Konfigurieren Sie das Add-on:
@@ -25,6 +27,11 @@ ElevenLabs Scribe ist ein leistungsstarker Speech-to-Text-Dienst, der mehrere Sp
 
 4. Starten Sie das Add-on:
    - Klicken Sie auf **Start**
+   
+5. In Wyoming hinzufügen:
+   - Öffne **Services und Dienste**
+   - Integration hinzufügen
+   - Im Voice-Assistant in speech to text auswählen
 
 ## Konfiguration
 
