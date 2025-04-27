@@ -13,7 +13,7 @@ from wyoming.asr import Transcribe, Transcript
 from wyoming.audio import AudioChunk, AudioStop
 from wyoming.client import AsyncClient
 from wyoming.info import Describe, Info, Attribution, AsrModel, AsrProgram
-from wyoming.server import AsyncServer, AsyncTcpServer
+from wyoming.server import AsyncTcpServer
 
 _LOGGER = logging.getLogger(__name__)
 
@@ -38,12 +38,12 @@ class ElevenLabsWyoming:
 
     async def start(self):
         """Startet den Wyoming-Server."""
-        # Verwende AsyncTcpServer anstelle von AsyncServer
-        self.server = AsyncTcpServer(self.handle_client, host=self.host, port=self.port)
+        # Korrigierte Server-Initialisierung
+        self.server = AsyncTcpServer(self.host, self.port)
         _LOGGER.info("ElevenLabs Wyoming Server läuft auf %s:%s", self.host, self.port)
 
         # Server starten
-        await self.server.run()
+        await self.server.run(self.handle_client)
 
     async def handle_client(self, client: AsyncClient):
         """Clientverbindungen verarbeiten."""
