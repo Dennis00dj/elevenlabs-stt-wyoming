@@ -1,6 +1,6 @@
 {
   "name": "ElevenLabs Scribe STT",
-  "version": "1.1.3",
+  "version": "1.1.4",
   "slug": "elevenlabs_stt",
   "description": "Speech-to-Text mit ElevenLabs Scribe für Home Assistant",
   "url": "https://github.com/Dennis00dj/elevenlabs-stt-wyoming",
