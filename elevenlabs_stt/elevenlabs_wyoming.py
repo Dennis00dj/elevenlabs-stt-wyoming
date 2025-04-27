@@ -14,7 +14,20 @@ from wyoming.audio import AudioChunk, AudioStop
 from wyoming.event import Event
 from wyoming.info import AsrModel, AsrProgram, Attribution, Describe, Info
 from wyoming.server import AsyncServer, AsyncEventHandler
-from wyoming.zeroconf import register_server
+
+# Try to import zeroconf, but continue if not available
+try:
+    from wyoming.zeroconf import register_server
+    _HAVE_ZEROCONF = True
+except ImportError:
+    _LOGGER = logging.getLogger(__name__)
+    _LOGGER.warning("Zeroconf not available. Auto-discovery will not work.")
+    _HAVE_ZEROCONF = False
+    
+    # Dummy function that does nothing
+    async def register_server(name: str, port: int, host: Optional[str] = None) -> None:
+        _LOGGER.warning("Skipping Zeroconf registration (module not available)")
+        pass
 
 _LOGGER = logging.getLogger(__name__)
 
@@ -179,7 +192,7 @@ async def main() -> None:
     
     # Parse URI to get host and port for zeroconf
     uri_parts = args.uri.split(":")
-    if len(uri_parts) == 3 and uri_parts[0] == "tcp":
+    if _HAVE_ZEROCONF and len(uri_parts) == 3 and uri_parts[0] == "tcp":
         # Format is tcp://host:port
         host = uri_parts[1].strip("/")
         if not host or host == "0.0.0.0":
@@ -189,6 +202,8 @@ async def main() -> None:
         
         # Register for zeroconf discovery
         await register_server("elevenlabs_wyoming", port, host)
+    else:
+        _LOGGER.warning("Skipping Zeroconf registration (not a TCP URI or zeroconf unavailable)")
     
     # Create server
     server = AsyncServer.from_uri(args.uri)
