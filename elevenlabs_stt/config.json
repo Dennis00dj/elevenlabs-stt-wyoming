@@ -10,7 +10,7 @@
   "init": false,
   "options": {
     "api_key": "",
-    "port": 10200,
+    "port": 10300,
     "model_id": "scribe_v1",
     "debug": false
   },
@@ -21,9 +21,9 @@
     "debug": "bool"
   },
   "ports": {
-    "10200/tcp": 10200
+    "10300/tcp": 10300
   },
   "ports_description": {
-    "10200/tcp": "Wyoming Protokoll (STT)"
+    "10300/tcp": "Wyoming Protokoll (STT)"
   }
 }
