@@ -5,137 +5,92 @@ import asyncio
 import logging
 import os
 import tempfile
-import uuid
 import wave
 import requests
 from typing import Optional
 
-# Direct Wyoming imports - check available classes first
-from wyoming.server import AsyncServer
-from wyoming.info import Info, Describe, AsrProgram, AsrModel, Attribution
+import wyoming
 from wyoming.asr import Transcribe, Transcript
 from wyoming.audio import AudioChunk, AudioStop
+from wyoming.event import Event
+from wyoming.info import AsrModel, AsrProgram, Attribution, Describe, Info
+from wyoming.server import AsyncServer, AsyncEventHandler
 
 _LOGGER = logging.getLogger(__name__)
 
-class ElevenLabsSTTServer:
-    """ElevenLabs STT Wyoming server."""
+class ElevenLabsEventHandler(AsyncEventHandler):
+    """Event handler for Wyoming protocol clients."""
 
-    def __init__(self, api_key: str, host: str, port: int, model_id: str = "scribe_v1"):
-        """Initialize server."""
+    def __init__(
+        self,
+        wyoming_info: Info,
+        api_key: str,
+        model_id: str,
+        *args,
+        **kwargs,
+    ) -> None:
+        super().__init__(*args, **kwargs)
+        self.wyoming_info_event = wyoming_info.event()
         self.api_key = api_key
-        self.host = host
-        self.port = port
         self.model_id = model_id
-        self.server = None
+        self._language = "de"  # Default language
+        self._wav_dir = tempfile.TemporaryDirectory()
+        self._wav_path = os.path.join(self._wav_dir.name, "speech.wav")
+        self._wav_file: Optional[wave.Wave_write] = None
 
-    async def start(self) -> None:
-        """Run server."""
-        # Create Wyoming server directly
-        self.server = AsyncServer(self.host, self.port)
-        _LOGGER.info(f"ElevenLabs Wyoming Server starting on {self.host}:{self.port}")
-        
-        # Start the server
-        await self.server.start(self.handle_client)
+    async def handle_event(self, event: Event) -> bool:
+        """Handle Wyoming protocol events."""
+        if AudioChunk.is_type(event.type):
+            chunk = AudioChunk.from_event(event)
+            if self._wav_file is None:
+                self._wav_file = wave.open(self._wav_path, "wb")
+                self._wav_file.setframerate(chunk.rate)
+                self._wav_file.setsampwidth(chunk.width)
+                self._wav_file.setnchannels(chunk.channels)
+            self._wav_file.writeframes(chunk.audio)
+            return True
 
-    async def handle_client(self, connection) -> None:
-        """Handle Wyoming client."""
-        client_id = str(uuid.uuid4())
-        _LOGGER.info(f"Client {client_id} connected")
-        
-        # Audio buffer and state
-        audio_buffer = bytearray()
-        language = "de"
-        sample_rate = 16000
-        sample_width = 2
-        sample_channels = 1
-        
-        try:
-            async for message in connection.messages():
-                if isinstance(message, Describe):
-                    # Respond with info
-                    _LOGGER.debug("Received describe message")
-                    
-                    # Create response
-                    info = Info(
-                        asr=[
-                            AsrProgram(
-                                name="elevenlabs_wyoming",
-                                attribution=Attribution(
-                                    name="ElevenLabs Scribe",
-                                    url="https://elevenlabs.io/speech-to-text",
-                                ),
-                                models=[
-                                    AsrModel(
-                                        id="scribe_v1",
-                                        name="ElevenLabs Scribe",
-                                        languages=["de", "en", "es", "fr", "it", "ja", "pt", "nl"],
-                                    )
-                                ],
-                            )
-                        ]
-                    )
-                    await connection.write_message(info)
+        if AudioStop.is_type(event.type):
+            _LOGGER.debug(
+                "Audio stopped. Transcribing with language=%s",
+                self._language,
+            )
+            
+            if self._wav_file is None:
+                _LOGGER.warning("No audio received")
+                await self.write_event(Transcript(text="").event())
+                return False
                 
-                elif isinstance(message, Transcribe):
-                    # Update language
-                    language = message.language or "de"
-                    _LOGGER.debug(f"Transcription requested with language: {language}")
-                
-                elif isinstance(message, AudioChunk):
-                    # Collect audio data
-                    audio_buffer.extend(message.audio)
-                    sample_rate = message.rate
-                    sample_width = message.width
-                    sample_channels = message.channels
-                
-                elif isinstance(message, AudioStop):
-                    # Process collected audio
-                    if not audio_buffer:
-                        _LOGGER.warning("Empty audio buffer")
-                        await connection.write_message(Transcript(text=""))
-                        continue
-                    
-                    _LOGGER.debug(
-                        f"Audio received: {len(audio_buffer)} bytes, rate={sample_rate}, "
-                        f"width={sample_width}, channels={sample_channels}"
-                    )
-                    
-                    # Save audio to WAV file
-                    with tempfile.NamedTemporaryFile(suffix=".wav", delete=False) as temp_file:
-                        temp_path = temp_file.name
-                        
-                        with wave.open(temp_path, "wb") as wav_file:
-                            wav_file.setnchannels(sample_channels)
-                            wav_file.setsampwidth(sample_width)
-                            wav_file.setframerate(sample_rate)
-                            wav_file.writeframes(audio_buffer)
-                    
-                    # Reset audio buffer
-                    audio_buffer = bytearray()
-                    
-                    try:
-                        # Send to ElevenLabs API
-                        _LOGGER.debug(f"Sending audio to ElevenLabs API (language: {language})")
-                        text = await self._transcribe_audio(temp_path, language)
-                        
-                        # Send transcription back
-                        _LOGGER.debug(f"Transcription: {text}")
-                        await connection.write_message(Transcript(text=text))
-                    except Exception as e:
-                        _LOGGER.error(f"Error during transcription: {e}")
-                        await connection.write_message(Transcript(text=""))
-                    finally:
-                        # Delete temporary file
-                        try:
-                            os.unlink(temp_path)
-                        except Exception as e:
-                            _LOGGER.error(f"Error deleting temporary file: {e}")
-        
-        except Exception as e:
-            _LOGGER.exception(f"Error handling client {client_id}: {e}")
-        finally:
-            _LOGGER.info(f"Client {client_id} disconnected")
+            self._wav_file.close()
+            self._wav_file = None
+            
+            try:
+                # Transcribe using ElevenLabs API
+                text = await self._transcribe_audio(self._wav_path, self._language)
+                _LOGGER.info(text)
+                await self.write_event(Transcript(text=text).event())
+                _LOGGER.debug("Completed request")
+            except Exception as e:
+                _LOGGER.error(f"Error during transcription: {e}")
+                await self.write_event(Transcript(text="").event())
+            
+            # Reset language to default
+            self._language = "de"
+            return False
+
+        if Transcribe.is_type(event.type):
+            transcribe = Transcribe.from_event(event)
+            if transcribe.language:
+                self._language = transcribe.language
+                _LOGGER.debug("Language set to %s", transcribe.language)
+            return True
+
+        if Describe.is_type(event.type):
+            await self.write_event(self.wyoming_info_event)
+            _LOGGER.debug("Sent info")
+            return True
+
+        return True
 
     async def _transcribe_audio(self, audio_path: str, language_code: str) -> str:
         """Transcribe audio with ElevenLabs API."""
@@ -171,8 +126,7 @@ async def main() -> None:
     """Main function."""
     parser = argparse.ArgumentParser()
     parser.add_argument("--api-key", required=True, help="ElevenLabs API Key")
-    parser.add_argument("--host", default="0.0.0.0", help="Host (default: 0.0.0.0)")
-    parser.add_argument("--port", type=int, default=10200, help="Port (default: 10200)")
+    parser.add_argument("--uri", required=True, help="unix:// or tcp:// URI")
     parser.add_argument(
         "--model-id", default="scribe_v1", help="ElevenLabs model ID (default: scribe_v1)"
     )
@@ -186,23 +140,52 @@ async def main() -> None:
         format="%(asctime)s - %(name)s - %(levelname)s - %(message)s",
     )
     
-    # Let's print Wyoming version info for debugging
+    # Log Wyoming version info
     try:
-        import wyoming
         _LOGGER.info(f"Wyoming library version: {getattr(wyoming, '__version__', 'unknown')}")
     except Exception as e:
         _LOGGER.warning(f"Could not determine Wyoming version: {e}")
     
-    # Create and start server
-    server = ElevenLabsSTTServer(
-        api_key=args.api_key,
-        host=args.host,
-        port=args.port,
-        model_id=args.model_id,
+    # Supported languages
+    supported_languages = ["de", "en", "es", "fr", "it", "ja", "pt", "nl"]
+    
+    # Create Wyoming info
+    wyoming_info = Info(
+        asr=[
+            AsrProgram(
+                name="elevenlabs_wyoming",
+                description="ElevenLabs Scribe STT for Home Assistant",
+                attribution=Attribution(
+                    name="ElevenLabs",
+                    url="https://elevenlabs.io/speech-to-text",
+                ),
+                installed=True,
+                models=[
+                    AsrModel(
+                        name="scribe_v1",
+                        description="ElevenLabs Scribe",
+                        attribution=Attribution(
+                            name="ElevenLabs",
+                            url="https://elevenlabs.io/speech-to-text",
+                        ),
+                        installed=True,
+                        languages=supported_languages,
+                    )
+                ],
+            )
+        ],
     )
     
+    # Create server
+    server = AsyncServer.from_uri(args.uri)
+    _LOGGER.info("Starting ElevenLabs STT Wyoming Server")
+    
     try:
-        await server.start()
+        await server.run(
+            lambda *args, **kwargs: ElevenLabsEventHandler(
+                wyoming_info, args.api_key, args.model_id, *args, **kwargs
+            )
+        )
     except KeyboardInterrupt:
         _LOGGER.info("Server shutdown by keyboard interrupt")
 

@@ -1,5 +1,4 @@
 #!/bin/bash
-
 CONFIG_PATH=/data/options.json
 
 # Prüfen, ob Konfigurationsdatei existiert
@@ -33,9 +32,12 @@ if [ "$DEBUG" = "true" ]; then
   DEBUG_FLAG="--debug"
 fi
 
+# Erstelle Wyoming URI
+WYOMING_URI="tcp://0.0.0.0:$PORT"
+
 echo "Starte ElevenLabs Wyoming Service auf Port $PORT mit Model $MODEL_ID..."
 python3 /app/elevenlabs_wyoming.py \
   --api-key "$API_KEY" \
-  --port "$PORT" \
+  --uri "$WYOMING_URI" \
   --model-id "$MODEL_ID" \
   $DEBUG_FLAG
