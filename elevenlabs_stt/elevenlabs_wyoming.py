@@ -7,13 +7,13 @@ import logging
 import os
 import tempfile
 import requests
-from typing import Optional, List, Dict
+from typing import Optional, List, Dict, Callable, Awaitable
 
 from wyoming.asr import Transcribe, Transcript
 from wyoming.audio import AudioChunk, AudioStop
 from wyoming.client import AsyncClient
 from wyoming.info import Describe, Info, Attribution, AsrModel, AsrProgram
-from wyoming.server import AsyncServer
+from wyoming.server import AsyncServer, AsyncTcpServer
 
 _LOGGER = logging.getLogger(__name__)
 
@@ -33,17 +33,17 @@ class ElevenLabsWyoming:
         self.port = port
         self.model_id = model_id
         self.sample_rate = sample_rate
-        self.server: Optional[AsyncServer] = None
+        self.server = None
         self.clients: List[AsyncClient] = []
 
     async def start(self):
         """Startet den Wyoming-Server."""
-        # Aktualisierte Methode zum Erstellen des Servers
-        self.server = AsyncServer(self.host, self.port)
+        # Verwende AsyncTcpServer anstelle von AsyncServer
+        self.server = AsyncTcpServer(self.handle_client, host=self.host, port=self.port)
         _LOGGER.info("ElevenLabs Wyoming Server läuft auf %s:%s", self.host, self.port)
 
-        await self.server.start()
-        await self.server.handle_forever(self.handle_client)
+        # Server starten
+        await self.server.run()
 
     async def handle_client(self, client: AsyncClient):
         """Clientverbindungen verarbeiten."""
@@ -56,8 +56,11 @@ class ElevenLabsWyoming:
             sample_rate = self.sample_rate
             sample_width = 2  # 16-bit
             sample_channels = 1  # mono
+            language_code = "de"  # Default-Sprache
 
             async for message in client:
+                _LOGGER.debug(f"Erhaltene Nachricht: {type(message).__name__}")
+                
                 if isinstance(message, Describe):
                     # Info über den Service liefern
                     models = [
@@ -126,9 +129,11 @@ class ElevenLabsWyoming:
 
                     try:
                         # An ElevenLabs API senden
+                        _LOGGER.debug(f"Sende Audio an ElevenLabs (Sprache: {language_code})")
                         text = await self._transcribe_audio(temp_path, language_code)
                         
                         # Ergebnis zurück an den Client senden
+                        _LOGGER.debug(f"Sende Transkription zurück: {text}")
                         await client.write_message(Transcript(text=text))
                     except Exception as e:
                         _LOGGER.error("Fehler bei der Transkription: %s", e)
@@ -141,7 +146,8 @@ class ElevenLabsWyoming:
             _LOGGER.exception("Fehler beim Verarbeiten des Clients: %s", e)
         finally:
             # Client aus der Liste entfernen
-            self.clients.remove(client)
+            if client in self.clients:
+                self.clients.remove(client)
             _LOGGER.debug("Client getrennt: %s", client)
 
     async def _transcribe_audio(self, audio_path: str, language_code: str) -> str:
@@ -183,7 +189,7 @@ class ElevenLabsWyoming:
         if self.server:
             await self.server.stop()
 
-        for client in self.clients:
+        for client in list(self.clients):
             client.close()
 
 
@@ -221,7 +227,12 @@ async def main():
         sample_rate=args.sample_rate,
     )
     
-    await server.start()
+    try:
+        await server.start()
+    except KeyboardInterrupt:
+        _LOGGER.info("Server-Shutdown durch Tastatur-Interrupt")
+    finally:
+        await server.stop()
 
 
 if __name__ == "__main__":
