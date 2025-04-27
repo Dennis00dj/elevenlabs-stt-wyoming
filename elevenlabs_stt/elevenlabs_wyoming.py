@@ -38,10 +38,12 @@ class ElevenLabsWyoming:
 
     async def start(self):
         """Startet den Wyoming-Server."""
-        self.server = AsyncServer.from_address(self.host, self.port)
+        # Aktualisierte Methode zum Erstellen des Servers
+        self.server = AsyncServer(self.host, self.port)
         _LOGGER.info("ElevenLabs Wyoming Server läuft auf %s:%s", self.host, self.port)
 
-        await self.server.run(self.handle_client)
+        await self.server.start()
+        await self.server.handle_forever(self.handle_client)
 
     async def handle_client(self, client: AsyncClient):
         """Clientverbindungen verarbeiten."""
@@ -179,8 +181,7 @@ class ElevenLabsWyoming:
     async def stop(self):
         """Server stoppen und Clients trennen."""
         if self.server:
-            self.server.close()
-            await self.server.wait_closed()
+            await self.server.stop()
 
         for client in self.clients:
             client.close()
