@@ -12,7 +12,7 @@ from typing import Optional
 
 from wyoming.server import AsyncServer
 from wyoming.info import Info, Describe, AsrProgram, AsrModel, Attribution
-from wyoming.asr import Transcribe, Transcript, AsrStop
+from wyoming.asr import Transcribe, Transcript
 from wyoming.audio import AudioChunk, AudioStop
 
 _LOGGER = logging.getLogger(__name__)
@@ -84,7 +84,7 @@ class ElevenLabsSTTServer:
                     sample_width = message.width
                     sample_channels = message.channels
                 
-                elif isinstance(message, AudioStop) or isinstance(message, AsrStop):
+                elif isinstance(message, AudioStop):
                     # Process collected audio
                     if not audio_buffer:
                         _LOGGER.warning("Empty audio buffer")
