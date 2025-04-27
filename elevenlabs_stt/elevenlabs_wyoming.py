@@ -45,8 +45,9 @@ class ElevenLabsWyoming:
         # Server starten
         await self.server.run(self.handle_client)
 
-    async def handle_client(self, client: AsyncClient):
+    async def handle_client(self, reader, writer):
         """Clientverbindungen verarbeiten."""
+        client = AsyncClient(reader, writer)
         self.clients.append(client)
         _LOGGER.debug("Client verbunden: %s", client)
 
