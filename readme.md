@@ -1,74 +1,74 @@
-# ElevenLabs Scribe STT Add-on für Home Assistant
-#readme.md
+# ElevenLabs Scribe STT Add-on for Home Assistant  
+#readme.md  
 
-Dieses Add-on fügt ElevenLabs Scribe Speech-to-Text zu Home Assistant hinzu. Es verwendet das Wyoming-Protokoll, um nahtlos mit dem Voice Assistant zu integrieren.
+This add-on integrates ElevenLabs Scribe Speech-to-Text into Home Assistant. It uses the Wyoming protocol for seamless integration with the Voice Assistant.  
 
-## Überblick
+## Overview  
 
-ElevenLabs Scribe ist ein leistungsstarker Speech-to-Text-Dienst, der mehrere Sprachen unterstützt. Dieses Add-on macht ElevenLabs Scribe als STT-Provider in der Home Assistant Voice Assistant-UI auswählbar.
+ElevenLabs Scribe is a powerful speech-to-text service supporting multiple languages. This add-on enables ElevenLabs Scribe as an STT provider selectable in the Home Assistant Voice Assistant UI.  
 
-## Installation
+## Installation  
 
-1. Fügen Sie dieses Repository zu Ihren Add-on-Repositories hinzu:
-   - Gehen Sie zu **Einstellungen** → **Add-ons** → **Add-on Store**
-   - Klicken Sie auf das Menü in der oberen rechten Ecke und wählen Sie **Repositories**
-   - Fügen Sie die folgende URL hinzu: `https://github.com/Dennis00dj/elevenlabs-stt-wyoming`
-   - Klicken Sie auf **Hinzufügen**
+1. Add this repository to your add-on repositories:  
+   - Go to **Settings** → **Add-ons** → **Add-on Store**  
+   - Click the menu in the top-right corner and select **Repositories**  
+   - Add the following URL: `https://github.com/Dennis00dj/elevenlabs-stt-wyoming`  
+   - Click **Add**  
 
-2. Installieren Sie das Add-on:
-   - Suchen Sie nach "ElevenLabs Scribe STT" in der Add-on-Liste
-   - Falls nicht vorhanden einmal die Seite neuladen
-   - Klicken Sie auf **Installieren**
+2. Install the add-on:  
+   - Search for "ElevenLabs Scribe STT" in the add-on list  
+   - If not found, refresh the page once  
+   - Click **Install**  
 
-3. Konfigurieren Sie das Add-on:
-   - Geben Sie Ihren ElevenLabs API-Key ein
-   - Konfigurieren Sie den Port (Standard: 10300)
-   - Klicken Sie auf **Speichern**
+3. Configure the add-on:  
+   - Enter your ElevenLabs API key  
+   - Configure the port (default: 10300)  
+   - Click **Save**  
 
-4. Starten Sie das Add-on:
-   - Klicken Sie auf **Start**
-   
-5. In Wyoming hinzufügen:
-   - Öffne **Services und Dienste**
-   - Integration hinzufügen
-   - Im Voice-Assistant in speech to text auswählen
+4. Start the add-on:  
+   - Click **Start**  
 
-## Konfiguration
+5. Add via Wyoming:  
+   - Open **Services & Integrations**  
+   - Add integration  
+   - Select "Wyoming" under Voice Assistant in the Speech-to-Text section  
 
-| Option | Beschreibung | Standard |
-|--------|--------------|----------|
-| `api_key` | Ihr ElevenLabs API-Key (erforderlich) | - |
-| `port` | Der Port für den Wyoming-Server | 10300 |
-| `model_id` | ElevenLabs Modell-ID | scribe_v1 |
-| `debug` | Debug-Modus aktivieren | false |
+## Configuration  
 
-## Verwendung mit dem Voice Assistant
+| Option | Description | Default |  
+|--------|-------------|---------|  
+| `api_key` | Your ElevenLabs API key (required) | - |  
+| `port` | Port for the Wyoming server | 10300 |  
+| `model_id` | ElevenLabs model ID | scribe_v1 |  
+| `debug` | Enable debug mode | false |  
 
-1. Gehen Sie zu **Einstellungen** → **Voice Assistant**
-2. Wählen Sie als STT-Engine "Wyoming"
-3. Geben Sie folgende Einstellungen ein:
-   - Host: `localhost` (oder Ihre Home Assistant IP)
-   - Port: `10300` (oder der von Ihnen konfigurierte Port)
-4. Speichern Sie die Einstellungen
-5. Der Voice Assistant verwendet nun ElevenLabs Scribe für die Spracherkennung
+## Usage with the Voice Assistant  
 
-## Unterstützte Sprachen
+1. Go to **Settings** → **Voice Assistant**  
+2. Select "Wyoming" as the STT engine  
+3. Enter the following settings:  
+   - Host: `localhost` (or your Home Assistant IP)  
+   - Port: `10300` (or your configured port)  
+4. Save the settings  
+5. The Voice Assistant will now use ElevenLabs Scribe for speech recognition  
 
-- Deutsch (de)
-- Englisch (en)
-- Spanisch (es)
-- Französisch (fr)
-- Italienisch (it)
-- Japanisch (ja)
-- Portugiesisch (pt)
-- Niederländisch (nl)
+## Supported Languages  
 
-## Fehlerbehebung
+- German (de)  
+- English (en)  
+- Spanish (es)  
+- French (fr)  
+- Italian (it)  
+- Japanese (ja)  
+- Portuguese (pt)  
+- Dutch (nl)  
 
-- Überprüfen Sie die Add-on-Logs, um mögliche Probleme zu identifizieren
-- Stellen Sie sicher, dass Ihr API-Key gültig ist
-- Prüfen Sie, ob der Port nicht von einer anderen Anwendung verwendet wird
+## Troubleshooting  
 
-## Lizenz
+- Check the add-on logs to identify potential issues  
+- Ensure your API key is valid  
+- Verify the port is not in use by another application  
 
-Dieses Projekt steht unter der MIT-Lizenz.
+## License  
+
+This project is licensed under the MIT License.
